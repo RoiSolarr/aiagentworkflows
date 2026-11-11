@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confirm action — AI Agent Workflows</title>
+
+<!-- This page must never be indexed. The vercel.json header is the real
+     enforcement; this tag is the belt to that pair of braces. -->
+<meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Internal approval confirmation page.">
+
+<meta name="theme-color" content="#FBFAF7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E0D0B" media="(prefers-color-scheme: dark)">
+
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/styles.css">
+
+<script>
+(function () {
+  try {
+    var saved = localStorage.getItem('aaw-theme');
+    var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+  } catch (e) { /* private mode, keep the default */ }
+})();
+</script>
+</head>
+
+<body class="approve-body">
+<main class="approve-main">
+
+  <!-- ---------- State A: confirm ---------- -->
+  <section class="panel" id="state-confirm" hidden>
+    <a class="panel__brand" href="/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 7h7"></path><path d="M4 17h7"></path><path d="M11 7v10"></path>
+        <circle cx="18" cy="12" r="3"></circle><path d="M11 12h4"></path>
+      </svg>
+      AI Agent Workflows
+    </a>
+
+    <h1 class="panel__title">Confirm this action</h1>
+    <p class="panel__text">
+      You opened an approval link from Slack. Confirm the action below, or reject it. The lead's details
+      are deliberately not shown here, only the decision you are about to make.
+    </p>
+
+    <div class="action-box">
+      <div class="action-box__row">
+        <span class="action-box__key">Action</span>
+        <span class="action-box__val" id="action-label">—</span>
+      </div>
+      <div class="action-box__row">
+        <span class="action-box__key">Record</span>
+        <span class="action-box__val" id="record-label">—</span>
+      </div>
+    </div>
+
+    <p class="panel__text" id="action-meaning"></p>
+    <p class="panel__text panel__hint" id="decision-hint" hidden></p>
+
+    <div class="panel__actions" id="confirm-actions">
+      <button class="btn btn--primary" id="btn-approve" type="button">Approve and send</button>
+      <button class="btn btn--danger" id="btn-reject" type="button">Reject</button>
+    </div>
+
+    <p class="panel__fineprint">
+      This link works once. After you click, the token is marked used in Airtable and the link becomes
+      inert, so a forwarded Slack message cannot re-send anything.
+    </p>
+  </section>
+
+  <!-- ---------- State B: working ---------- -->
+  <section class="panel" id="state-working" hidden>
+    <div class="verdict">
+      <span class="verdict__icon" aria-hidden="true"><span class="spinner"></span></span>
+      <div>
+        <h2 id="working-title">Sending your decision</h2>
+        <p>Talking to the approval handler. This usually takes a second or two.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- State C: done ---------- -->
+  <section class="panel" id="state-done" hidden>
+    <div class="verdict" id="done-verdict">
+      <span class="verdict__icon" id="done-icon" aria-hidden="true"></span>
+      <div>
+        <h2 id="done-title">—</h2>
+        <p id="done-text">—</p>
+      </div>
+    </div>
+    <div class="panel__actions">
+      <a class="btn btn--ghost" href="/">Back to the site</a>
+      <button class="btn btn--ghost" id="btn-retry" type="button" hidden>Try again</button>
+    </div>
+  </section>
+
+  <!-- ---------- State D: bad link ---------- -->
+  <section class="panel" id="state-invalid" hidden>
+    <div class="verdict verdict--bad">
+      <span class="verdict__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="9"></circle><path d="M12 7v6M12 16.5v.01"></path>
+        </svg>
+      </span>
+      <div>
+        <h2>This link is not usable</h2>
+        <p id="invalid-reason">
+          The approval link is missing information or is malformed. Open the original message in Slack and
+          use the links there.
+        </p>
+      </div>
+    </div>
+    <div class="panel__actions">
+      <a class="btn btn--ghost" href="/">Back to the site</a>
+    </div>
+  </section>
+
+</main>
+
+<script src="/approve.js"></script>
+</body>
+</html>

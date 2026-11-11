@@ -1,0 +1,18 @@
+# Environment files. .env.example is the only one that gets committed.
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel
+
+# Node, only present if you install the CLI or newman locally
+node_modules/
+npm-debug.log*
+
+# Postman environment exports, which carry your webhook token
+tests/*.postman_environment.json
+
+# OS noise
+.DS_Store
+Thumbs.db

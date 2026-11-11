@@ -1,0 +1,7 @@
+# AI Agent Workflows
+# The marketing page is public. The approval page and the API are not.
+
+User-agent: *
+Allow: /
+Disallow: /approve.html
+Disallow: /api/

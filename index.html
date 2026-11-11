@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Agent Workflows — an AI agent that decides, then waits for a human</title>
+<meta name="description" content="A working demo of an AI agent built in Make.com. It qualifies leads, triages support and researches companies, then routes every decision through a human approval in Slack before anything is sent.">
+<meta name="author" content="Roi Vincent P. Solar">
+<meta name="theme-color" content="#FBFAF7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E0D0B" media="(prefers-color-scheme: dark)">
+
+<link rel="canonical" href="https://YOUR_VERCEL_DOMAIN/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AI Agent Workflows">
+<meta property="og:title" content="AI Agent Workflows — an AI agent that decides, then waits for a human">
+<meta property="og:description" content="Submit a form and watch an AI agent score, classify and draft a reply. Nothing reaches the visitor until a human approves it in Slack.">
+<meta property="og:url" content="https://YOUR_VERCEL_DOMAIN/">
+<meta property="og:image" content="https://YOUR_VERCEL_DOMAIN/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="AI Agent Workflows: form to Make to AI agent to Airtable to Slack approval to reply.">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AI Agent Workflows — an AI agent that decides, then waits for a human">
+<meta name="twitter:description" content="Submit a form and watch an AI agent score, classify and draft a reply. Nothing reaches the visitor until a human approves it in Slack.">
+<meta name="twitter:image" content="https://YOUR_VERCEL_DOMAIN/assets/og-image.png">
+
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/styles.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "AI Agent Workflows",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "description": "A demonstration of an AI agent built with Make.com that qualifies leads, triages support requests and researches companies, with a human approval step in Slack before any reply is sent.",
+  "author": { "@type": "Person", "name": "Roi Vincent P. Solar" },
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
+
+<!-- Sets the theme before first paint so the page never flashes the wrong colours. -->
+<script>
+(function () {
+  try {
+    var saved = localStorage.getItem('aaw-theme');
+    var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+  } catch (e) { /* private mode, keep the default */ }
+})();
+</script>
+</head>
+
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="shell site-header__inner">
+    <a class="brand" href="/">
+      <span class="brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 7h7"></path><path d="M4 17h7"></path><path d="M11 7v10"></path>
+          <circle cx="18" cy="12" r="3"></circle><path d="M11 12h4"></path>
+        </svg>
+      </span>
+      <span class="brand__text">AI Agent Workflows</span>
+    </a>
+
+    <nav class="site-nav" id="site-nav" aria-label="Main">
+      <a href="#how">How it works</a>
+      <a href="#use-cases">Use cases</a>
+      <a href="#demo">Live demo</a>
+      <a href="#stack">Stack</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+
+    <div class="site-header__actions">
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path>
+        </svg>
+      </button>
+
+      <button class="icon-btn nav-toggle" id="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="shell hero__inner">
+      <p class="eyebrow">Make.com · AI agent · human in the loop</p>
+
+      <h1 class="hero__title">
+        An AI agent that decides what to do next,
+        <span class="hero__title-accent">then waits for a human.</span>
+      </h1>
+
+      <p class="hero__lead">
+        Submit the form below and a real agent reads it, scores it, picks an action and drafts a reply.
+        Then it stops. Every outgoing message waits for an approval click in Slack, so the agent is
+        autonomous about thinking and never autonomous about sending.
+      </p>
+
+      <div class="hero__actions">
+        <a class="btn btn--primary" href="#demo">Try the live demo</a>
+        <a class="btn btn--ghost" href="#how">See how it works</a>
+      </div>
+
+      <dl class="hero__stats">
+        <div class="stat">
+          <dt>Scenarios</dt>
+          <dd>2</dd>
+          <p>One main flow, one approval handler. Make free plan ceiling.</p>
+        </div>
+        <div class="stat">
+          <dt>Tool calls per run</dt>
+          <dd>3 max</dd>
+          <p>One Firecrawl scrape, one duplicate check, no loops.</p>
+        </div>
+        <div class="stat">
+          <dt>Auto sent messages</dt>
+          <dd>0</dd>
+          <p>Nothing leaves the system without a human approval.</p>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ================= HOW IT WORKS ================= -->
+  <section class="section" id="how">
+    <div class="shell">
+      <header class="section__head">
+        <p class="eyebrow">How it works</p>
+        <h2 class="section__title">Six steps, and a human gate at step five</h2>
+        <p class="section__lead">
+          The agent runs the moment the form is submitted. It finishes its thinking in seconds, writes
+          everything to Airtable, and then the workflow deliberately stops and asks a person.
+        </p>
+      </header>
+
+      <ol class="flow" id="flow" aria-label="Workflow from form submission to reply">
+        <li class="flow__step">
+          <span class="flow__index">01</span>
+          <span class="flow__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="3" width="16" height="18" rx="2"></rect>
+              <path d="M8 8h8M8 12h8M8 16h4"></path>
+            </svg>
+          </span>
+          <h3>Form</h3>
+          <p>A visitor submits the Jotform embed. CAPTCHA and Turnstile filter the obvious bots.</p>
+        </li>
+
+        <li class="flow__step">
+          <span class="flow__index">02</span>
+          <span class="flow__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v4M12 17v4M3 12h4M17 12h4"></path>
+              <rect x="8" y="8" width="8" height="8" rx="2"></rect>
+            </svg>
+          </span>
+          <h3>Make</h3>
+          <p>A webhook checks a secret token, parses the payload and validates the fields before spending anything.</p>
+        </li>
+
+        <li class="flow__step flow__step--accent">
+          <span class="flow__index">03</span>
+          <span class="flow__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M12 2a10 10 0 0 1 10 10M12 22A10 10 0 0 1 2 12"></path>
+              <circle cx="12" cy="2" r="1.4"></circle><circle cx="12" cy="22" r="1.4"></circle>
+            </svg>
+          </span>
+          <h3>AI agent</h3>
+          <p>It scores, classifies, researches the URL with Firecrawl if there is one, and picks a recommended action.</p>
+        </li>
+
+        <li class="flow__step">
+          <span class="flow__index">04</span>
+          <span class="flow__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="6" rx="8" ry="3"></ellipse>
+              <path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"></path>
+              <path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"></path>
+            </svg>
+          </span>
+          <h3>Airtable</h3>
+          <p>Score, category, reasoning and the draft reply land on the record. Status becomes Pending Approval.</p>
+        </li>
+
+        <li class="flow__step flow__step--gate">
+          <span class="flow__index">05</span>
+          <span class="flow__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 12v5a2 2 0 0 1-2 2H7l-4 3V7a2 2 0 0 1 2-2h7"></path>
+              <path d="M16 6l2.5 2.5L23 4"></path>
+            </svg>
+          </span>
+          <h3>Slack approval</h3>
+          <p>A human reads the draft and clicks Approve or Reject. Until then nothing is sent. This is the gate.</p>
+        </li>
+
+        <li class="flow__step">
+          <span class="flow__index">06</span>
+          <span class="flow__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 5h18v14H3z"></path><path d="M3 6l9 7 9-7"></path>
+            </svg>
+          </span>
+          <h3>Reply</h3>
+          <p>A second scenario checks the single use token, sends the Gmail reply and closes the record.</p>
+        </li>
+      </ol>
+
+      <p class="note">
+        <strong>Why the gate exists.</strong> An agent that can send email on its own is one bad
+        classification away from embarrassing you in front of a real customer. Keeping a person on the
+        send button costs about four seconds per lead and removes that entire class of failure.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= USE CASES ================= -->
+  <section class="section section--alt" id="use-cases">
+    <div class="shell">
+      <header class="section__head">
+        <p class="eyebrow">Use cases</p>
+        <h2 class="section__title">One agent, three modes</h2>
+        <p class="section__lead">
+          The inquiry type you pick on the form decides which mode the agent runs in. Same agent, same
+          JSON schema out, different job.
+        </p>
+      </header>
+
+      <div class="cards">
+        <article class="card">
+          <p class="card__tag">Sales inquiry</p>
+          <h3 class="card__title">Lead qualification</h3>
+          <p>
+            Scores the lead from 0 to 100 on fit, intent, budget signals, urgency and whether the company
+            looks real. Hot at 75 and above, warm from 40, cold below that, or flagged as spam.
+          </p>
+          <ul class="card__list">
+            <li>Book a call</li>
+            <li>Send a tailored reply</li>
+            <li>Request more info</li>
+            <li>Escalate to a human</li>
+            <li>Discard</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <p class="card__tag">Support request</p>
+          <h3 class="card__title">Support triage</h3>
+          <p>
+            Classifies the category as billing, technical, account or other, sets a priority, and drafts a
+            reply in the right register. Anything urgent, angry or legal is escalated rather than answered.
+          </p>
+          <ul class="card__list">
+            <li>Category and priority</li>
+            <li>Drafted response</li>
+            <li>Automatic escalation</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <p class="card__tag">Research request</p>
+          <h3 class="card__title">Research assistant</h3>
+          <p>
+            Scrapes the supplied URL with Firecrawl once, then writes a five bullet brief and a draft email
+            grounded in what it actually read. If the scrape fails it says so instead of inventing a company.
+          </p>
+          <ul class="card__list">
+            <li>One scrape per submission</li>
+            <li>Five bullet brief</li>
+            <li>No invented facts</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= LIVE DEMO ================= -->
+  <section class="section" id="demo">
+    <div class="shell">
+      <header class="section__head">
+        <p class="eyebrow">Live demo</p>
+        <h2 class="section__title">Send the agent something to think about</h2>
+        <p class="section__lead">
+          This form is wired to the real workflow. Your submission creates an Airtable record and triggers a
+          Slack approval. You will not receive an automated reply, because a human has to approve it first.
+        </p>
+      </header>
+
+      <div class="demo">
+        <div class="demo__form">
+          <div class="gate" id="gate">
+            <h3 class="gate__title">Quick check before the form loads</h3>
+            <p class="gate__text">
+              This keeps casual bots from burning through the free plan quotas behind this demo.
+            </p>
+            <div class="cf-turnstile"
+                 id="turnstile-widget"
+                 data-sitekey="YOUR_TURNSTILE_SITE_KEY"
+                 data-callback="onTurnstileSuccess"
+                 data-error-callback="onTurnstileError"
+                 data-expired-callback="onTurnstileExpired"
+                 data-theme="auto"></div>
+            <p class="gate__status" id="gate-status" role="status" aria-live="polite"></p>
+          </div>
+
+          <div class="form-frame" id="form-frame" hidden>
+            <iframe
+              id="jotform"
+              title="AI Agent Workflows demo form"
+              data-src="https://form.jotform.com/YOUR_JOTFORM_FORM_ID"
+              allow="microphone; camera; fullscreen"
+              referrerpolicy="strict-origin"
+              scrolling="auto"
+              loading="lazy"></iframe>
+          </div>
+        </div>
+
+        <aside class="demo__aside">
+          <h3 class="demo__aside-title">What happens after you submit</h3>
+          <ol class="steps">
+            <li><span class="steps__t">~1s</span> Make validates the token and your fields.</li>
+            <li><span class="steps__t">~3s</span> The agent scores and drafts. Firecrawl runs only if you gave a URL.</li>
+            <li><span class="steps__t">~4s</span> Airtable record set to Pending Approval.</li>
+            <li><span class="steps__t">~5s</span> A Slack message lands with the draft and two links.</li>
+            <li><span class="steps__t">then</span> Nothing, until a human clicks.</li>
+          </ol>
+          <p class="demo__privacy">
+            Submissions are stored in a private Airtable base for this demo and are not used for anything
+            else. Put in fake details if you would rather not share real ones. The agent treats everything
+            you type as untrusted data, so prompt injection attempts are welcome and will be ignored.
+          </p>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STACK ================= -->
+  <section class="section section--alt" id="stack">
+    <div class="shell">
+      <header class="section__head">
+        <p class="eyebrow">Tech stack</p>
+        <h2 class="section__title">Free tiers, end to end</h2>
+        <p class="section__lead">
+          Every piece of this runs on a free plan. That is a constraint the design had to earn, not an
+          accident.
+        </p>
+      </header>
+
+      <ul class="stack">
+        <li><span class="stack__name">Vercel</span><span class="stack__role">Static site and one serverless function</span></li>
+        <li><span class="stack__name">Jotform</span><span class="stack__role">Form and CAPTCHA, posted by webhook</span></li>
+        <li><span class="stack__name">Make.com</span><span class="stack__role">Two scenarios, routers, filters, error handlers</span></li>
+        <li><span class="stack__name">Make AI Agents</span><span class="stack__role">The decision layer, capped at three tool calls</span></li>
+        <li><span class="stack__name">Firecrawl</span><span class="stack__role">One page scrape per research request</span></li>
+        <li><span class="stack__name">Airtable</span><span class="stack__role">Database and the Kanban admin panel</span></li>
+        <li><span class="stack__name">Slack</span><span class="stack__role">Approvals and error alerts</span></li>
+        <li><span class="stack__name">Gmail</span><span class="stack__role">The approved reply, sent by a human decision</span></li>
+        <li><span class="stack__name">Cloudflare Turnstile</span><span class="stack__role">Bot check, verified server side</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ================= CASE STUDY ================= -->
+  <section class="section" id="case-study">
+    <div class="shell">
+      <header class="section__head">
+        <p class="eyebrow">Case study</p>
+        <h2 class="section__title">Build notes and a walkthrough</h2>
+        <p class="section__lead">
+          A short video showing a real submission moving from form to Slack approval to sent reply, plus
+          what broke along the way.
+        </p>
+      </header>
+
+      <div class="case">
+        <div class="case__video">
+          <!-- Replace the whole figure with an iframe embed once the video is recorded. -->
+          <div class="video-slot" role="img" aria-label="Demo video placeholder">
+            <span class="video-slot__play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+            </span>
+            <p class="video-slot__label">Demo video</p>
+            <p class="video-slot__hint">Drop the embed at <code>YOUR_DEMO_VIDEO_URL</code></p>
+          </div>
+        </div>
+
+        <div class="case__notes">
+          <h3>Three things worth knowing</h3>
+          <dl class="notes">
+            <dt>The credit model drove the architecture</dt>
+            <dd>Agent runs are billed per operation plus tokens, so the tool call cap and the single scrape rule are budget decisions, not style ones.</dd>
+
+            <dt>Parsing Jotform is the fiddly part</dt>
+            <dd>The payload arrives form encoded with the real data hidden in a <code>rawRequest</code> JSON string, and the name field is an object rather than a string.</dd>
+
+            <dt>Approval tokens have to be single use</dt>
+            <dd>Without that check, a forwarded Slack message is a re-send button that anyone can press twice.</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FAQ ================= -->
+  <section class="section section--alt" id="faq">
+    <div class="shell shell--narrow">
+      <header class="section__head">
+        <p class="eyebrow">FAQ</p>
+        <h2 class="section__title">Reasonable questions</h2>
+      </header>
+
+      <div class="faq">
+        <details>
+          <summary>Is the agent actually deciding, or is this a decision tree in disguise?</summary>
+          <div class="faq__body">
+            <p>
+              It decides. The agent is given the form content, a set of tools and a description of the five
+              actions it can recommend, and it chooses one along with a score, a category and a draft. The
+              router in Make only carries out whatever the agent returned. What is fixed is the schema it
+              has to answer in, not the answer.
+            </p>
+          </div>
+        </details>
+
+        <details>
+          <summary>What stops someone pasting instructions into the message field?</summary>
+          <div class="faq__body">
+            <p>
+              The system prompt tells the agent to treat everything from the form as untrusted data and to
+              ignore instructions found inside it. That handles the common cases. It is a mitigation rather
+              than a guarantee, which is exactly why the human approval gate exists: a successful injection
+              still has to get a person to click Approve on an obviously wrong draft.
+            </p>
+          </div>
+        </details>
+
+        <details>
+          <summary>How is the approval link secured?</summary>
+          <div class="faq__body">
+            <p>
+              Each submission gets a random token stored on its Airtable record. The approval page passes it
+              back to a second Make scenario, which checks that the token matches that record and has not
+              been used before, then marks it used. A second click on the same link does nothing. The page
+              itself shows only the action being confirmed, never the lead's details.
+            </p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Does the Turnstile check really protect the form?</summary>
+          <div class="faq__body">
+            <p>
+              Partly, and it is worth being straight about this. Turnstile sits on this page and is verified
+              server side before the form is revealed, which stops casual bots. The form itself is a Jotform
+              iframe with its own URL, so a determined bot can post to Jotform directly and skip this page.
+              Jotform's own CAPTCHA and the secret token check in Make are what cover that gap. A custom
+              form posting through the verification function would close it properly.
+            </p>
+          </div>
+        </details>
+
+        <details>
+          <summary>What happens if Firecrawl or the agent fails?</summary>
+          <div class="faq__body">
+            <p>
+              Error handler routes catch it. The record is set to Status = Error with the failure written to
+              an Error Log field, and a Slack alert goes out. If the agent returns something that is not
+              valid JSON, the record goes to Needs human review instead. Nothing fails silently and nothing
+              half sends.
+            </p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Can I see the build?</summary>
+          <div class="faq__body">
+            <p>
+              Yes. The site is plain HTML, CSS and JavaScript with no build step, and the repository is
+              public. <a href="YOUR_GITHUB_URL">Browse it on GitHub</a> or
+              <a href="YOUR_BOOKING_LINK">book a short call</a> if you would rather I walk you through the
+              Make scenarios directly.
+            </p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="shell site-footer__inner">
+    <div class="site-footer__brand">
+      <p class="brand__text">AI Agent Workflows</p>
+      <p class="site-footer__tag">
+        Built by Roi Vincent P. Solar as a demonstration of agentic automation with a human in the loop.
+      </p>
+    </div>
+
+    <nav class="site-footer__links" aria-label="Footer">
+      <a href="YOUR_PORTFOLIO_URL">Portfolio</a>
+      <a href="YOUR_GITHUB_URL">GitHub</a>
+      <a href="mailto:YOUR_CONTACT_EMAIL">Email</a>
+      <a href="YOUR_BOOKING_LINK">Book a call</a>
+    </nav>
+  </div>
+  <div class="shell site-footer__legal">
+    <p>No tracking, no analytics, no cookies beyond a single theme preference stored in your browser.</p>
+  </div>
+</footer>
+
+<!-- script.js runs first so the global Turnstile callbacks exist before the widget loads. -->
+<script src="/script.js"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</body>
+</html>
