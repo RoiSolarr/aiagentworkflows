@@ -2,8 +2,9 @@
    script.js — index.html only.
 
    Theme toggle, mobile navigation, the flow diagram reveal, the
-   Turnstile gate in front of the Jotform embed, and a small
-   postMessage listener that keeps the iframe at the right height.
+   Turnstile gate in front of the Jotform embed, a postMessage
+   listener that keeps that iframe at the right height, the click to
+   load case study video, and the active section highlight in the nav.
 
    Loaded without defer so the global Turnstile callbacks below
    exist before Cloudflare's async script finishes loading.
@@ -119,19 +120,104 @@
     // the "null" origin that sandboxed frames and some extensions send.
     var JOTFORM_ORIGIN = /^https:\/\/([a-z0-9-]+\.)*jotform\.com$/;
 
+    function apply(height) {
+      // A floor and a ceiling, so one malformed message cannot collapse the
+      // form to nothing or stretch the page to an absurd length.
+      if (!isFinite(height) || height < 420 || height > 20000) return;
+      frame.style.height = Math.ceil(height) + 'px';
+      frame.style.minHeight = '0';
+    }
+
+    /* Jotform has shipped two shapes of this message over the years: the
+       legacy "setHeight:<px>:<formId>" string and a structured object. Older
+       forms send the first, newer ones the second, and which you get is not
+       something this page can control, so both are handled. */
     window.addEventListener('message', function (e) {
       if (typeof e.origin !== 'string' || !JOTFORM_ORIGIN.test(e.origin)) return;
-      if (typeof e.data !== 'string') return;
 
-      var parts = e.data.split(':');
-      if (parts[0] !== 'setHeight') return;
+      if (typeof e.data === 'string') {
+        var parts = e.data.split(':');
+        if (parts[0] !== 'setHeight') return;
+        apply(parseInt(parts[1], 10));
+        return;
+      }
 
-      var height = parseInt(parts[1], 10);
-      if (!isFinite(height) || height < 200 || height > 20000) return;
-
-      frame.style.height = height + 'px';
-      frame.style.minHeight = '0';
+      if (e.data && typeof e.data === 'object' && e.data.type === 'setHeight') {
+        apply(parseInt(e.data.height, 10));
+      }
     });
+  }
+
+  /* ---------- Case study video ----------
+     The embed is injected on click rather than on page load. Nothing is
+     requested from Loom until a visitor asks for it, which keeps the
+     no-cookies line in the footer honest and saves everyone else the
+     third party script. */
+
+  function initVideo() {
+    var box = document.getElementById('video');
+    var btn = document.getElementById('video-play');
+    if (!box || !btn) return;
+
+    btn.addEventListener('click', function () {
+      var src = btn.getAttribute('data-embed');
+      if (!src) return;
+
+      var frame = document.createElement('iframe');
+      frame.className = 'video__frame';
+      frame.src = src + '?autoplay=1';
+      frame.title = 'AI Agent Workflows demo walkthrough';
+      // allow= already grants fullscreen; adding allowfullscreen as well only
+      // earns a console warning about one overriding the other.
+      frame.allow = 'autoplay; fullscreen; picture-in-picture';
+      frame.referrerPolicy = 'strict-origin';
+
+      box.innerHTML = '';
+      box.appendChild(frame);
+      frame.focus({ preventScroll: true });
+    });
+  }
+
+  /* ---------- Active section in the nav ----------
+     A band across the middle of the viewport decides which section counts as
+     current, so the highlight changes when a section is actually being read
+     rather than the instant its top edge appears. */
+
+  function initScrollSpy() {
+    var nav = document.getElementById('site-nav');
+    if (!nav || !('IntersectionObserver' in window)) return;
+
+    var links = {};
+    var sections = [];
+
+    Array.prototype.forEach.call(nav.querySelectorAll('a[href^="#"]'), function (a) {
+      var id = a.getAttribute('href').slice(1);
+      var section = document.getElementById(id);
+      if (!section) return;
+      links[id] = a;
+      sections.push(section);
+    });
+    if (!sections.length) return;
+
+    var onScreen = {};
+
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        onScreen[entry.target.id] = entry.isIntersecting;
+      });
+
+      var current = null;
+      for (var i = 0; i < sections.length; i++) {
+        if (onScreen[sections[i].id]) { current = sections[i].id; break; }
+      }
+
+      Object.keys(links).forEach(function (id) {
+        if (id === current) links[id].classList.add('is-active');
+        else links[id].classList.remove('is-active');
+      });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+
+    sections.forEach(function (section) { observer.observe(section); });
   }
 
   /* ---------- Turnstile gate ---------- */
@@ -224,6 +310,8 @@
     initNav();
     initFlow();
     initFrameResizer();
+    initVideo();
+    initScrollSpy();
     checkTurnstileConfigured();
   }
 

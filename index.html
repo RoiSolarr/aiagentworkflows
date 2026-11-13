@@ -1,4 +1,4 @@
-Fa<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
@@ -316,6 +316,12 @@ Fa<!DOCTYPE html>
       <div class="demo">
         <div class="demo__form">
           <div class="gate" id="gate">
+            <span class="gate__badge" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3l7 3v5c0 4.4-3 8.3-7 10-4-1.7-7-5.6-7-10V6z"></path>
+                <path d="M9 12l2 2 4-4"></path>
+              </svg>
+            </span>
             <h3 class="gate__title">Quick check before the form loads</h3>
             <p class="gate__text">
               This keeps casual bots from burning through the free plan quotas behind this demo.
@@ -335,27 +341,48 @@ Fa<!DOCTYPE html>
               id="jotform"
               title="AI Agent Workflows demo form"
               data-src="https://form.jotform.com/263141368297059"
-              allow="microphone; camera; fullscreen"
+              allow="fullscreen"
               referrerpolicy="strict-origin"
               scrolling="auto"
               loading="lazy"></iframe>
+            <p class="form-frame__foot">
+              Form not loading?
+              <a href="https://form.jotform.com/263141368297059" target="_blank" rel="noopener">Open it in a new tab</a>
+            </p>
           </div>
         </div>
 
         <aside class="demo__aside">
-          <h3 class="demo__aside-title">What happens after you submit</h3>
-          <ol class="steps">
-            <li><span class="steps__t">~1s</span> Make validates the token and your fields.</li>
-            <li><span class="steps__t">~3s</span> The agent scores and drafts. Firecrawl runs only if you gave a URL.</li>
-            <li><span class="steps__t">~4s</span> Airtable record set to Pending Approval.</li>
-            <li><span class="steps__t">~15s</span> A Slack message lands with the draft and two links.</li>
-            <li><span class="steps__t">then</span> Nothing, until a human clicks.</li>
-          </ol>
-          <p class="demo__privacy">
-            Submissions are stored in a private Airtable base for this demo and are not used for anything
-            else. Put in fake details if you would rather not share real ones. The agent treats everything
-            you type as untrusted data, so prompt injection attempts are welcome and will be ignored.
-          </p>
+          <div class="demo__aside-sticky">
+            <h3 class="demo__aside-title">What happens after you submit</h3>
+            <ol class="steps">
+              <li>
+                <span class="steps__t">~1s</span>
+                <span class="steps__d">Make validates the token and your fields.</span>
+              </li>
+              <li>
+                <span class="steps__t">~3s</span>
+                <span class="steps__d">The agent scores and drafts. Firecrawl runs only if you gave a URL.</span>
+              </li>
+              <li>
+                <span class="steps__t">~4s</span>
+                <span class="steps__d">Airtable record set to Pending Approval.</span>
+              </li>
+              <li>
+                <span class="steps__t">~15s</span>
+                <span class="steps__d">A Slack message lands with the draft and its approval links. Escalations arrive without them.</span>
+              </li>
+              <li class="steps__halt">
+                <span class="steps__t">then</span>
+                <span class="steps__d">Nothing, until a human clicks.</span>
+              </li>
+            </ol>
+            <p class="demo__privacy">
+              Submissions are stored in a private Airtable base for this demo and are not used for anything
+              else. Put in fake details if you would rather not share real ones. The agent treats everything
+              you type as untrusted data, so prompt injection attempts are welcome and will be ignored.
+            </p>
+          </div>
         </aside>
       </div>
     </div>
@@ -401,14 +428,27 @@ Fa<!DOCTYPE html>
 
       <div class="case">
         <div class="case__video">
-          <!-- Replace the whole figure with an iframe embed once the video is recorded. -->
-          <div class="video-slot" role="img" aria-label="Demo video placeholder">
-            <span class="video-slot__play" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
-            </span>
-            <p class="video-slot__label">Demo video</p>
-            <p class="video-slot__hint">Drop the embed at <code>https://www.loom.com/share/8e9e0c5917964ad2b20f250f09294bf0</code></p>
+          <!-- Click to load. Nothing is requested from Loom until the visitor
+               presses play, which keeps the no-cookies claim in the footer true
+               and stops a third party script loading on every page view. -->
+          <div class="video" id="video">
+            <button class="video__poster"
+                    id="video-play"
+                    type="button"
+                    data-embed="https://www.loom.com/embed/8e9e0c5917964ad2b20f250f09294bf0"
+                    aria-label="Play the demo video. It loads from Loom when you press play.">
+              <span class="video__play" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+              </span>
+              <span class="video__label">Watch the walkthrough</span>
+              <span class="video__meta">2 min · form to Slack approval to sent reply</span>
+              <span class="video__note">Loads from Loom when you press play</span>
+            </button>
           </div>
+          <p class="case__fallback">
+            Prefer to watch it there?
+            <a href="https://www.loom.com/share/8e9e0c5917964ad2b20f250f09294bf0" target="_blank" rel="noopener">Open the video on Loom</a>
+          </p>
         </div>
 
         <div class="case__notes">

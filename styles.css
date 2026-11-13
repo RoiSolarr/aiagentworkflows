@@ -242,6 +242,7 @@ code {
   transition: background var(--speed) var(--ease), color var(--speed) var(--ease);
 }
 .site-nav a:hover { background: var(--accent-soft); color: var(--ink); }
+.site-nav a.is-active { color: var(--accent); background: var(--accent-soft); }
 
 .site-header__actions { display: flex; gap: 0.4rem; align-items: center; }
 
@@ -464,8 +465,10 @@ code {
 .flow.is-in .flow__step:nth-child(5)::before { transition-delay: 640ms; }
 .flow.is-in .flow__step:nth-child(6)::before { transition-delay: 800ms; }
 
+/* Three passes, not infinite. A permanent blink on six icons pulls the eye
+   away from the copy for as long as the section is on screen. */
 .flow.is-in .flow__icon {
-  animation: pip 2.6s var(--ease) infinite;
+  animation: pip 2.6s var(--ease) 3;
 }
 .flow.is-in .flow__step:nth-child(1) .flow__icon { animation-delay: 0ms; }
 .flow.is-in .flow__step:nth-child(2) .flow__icon { animation-delay: 160ms; }
@@ -555,7 +558,7 @@ code {
   grid-template-columns: 1fr;
   align-items: start;
 }
-@media (min-width: 960px) { .demo { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); } }
+@media (min-width: 960px) { .demo { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); } }
 
 .demo__form {
   background: var(--surface);
@@ -564,52 +567,123 @@ code {
   overflow: hidden;
 }
 
-.gate { padding: clamp(1.75rem, 4vw, 3rem); text-align: center; }
+.gate { padding: clamp(2rem, 5vw, 3.5rem) clamp(1.25rem, 4vw, 3rem); text-align: center; }
+.gate__badge {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: 0 auto 1.1rem;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  color: var(--accent);
+}
+.gate__badge svg { width: 1.35rem; height: 1.35rem; }
 .gate__title { font-size: 1.25rem; margin-bottom: 0.5rem; }
-.gate__text { color: var(--muted); font-size: 0.9375rem; margin-bottom: 1.5rem; }
+.gate__text {
+  color: var(--muted);
+  font-size: 0.9375rem;
+  margin: 0 auto 1.5rem;
+  max-width: 30rem;
+}
 .cf-turnstile { display: flex; justify-content: center; min-height: 65px; }
 .gate__status { margin-top: 1rem; font-size: 0.875rem; color: var(--muted); min-height: 1.4rem; }
 .gate__status[data-state="error"] { color: var(--danger); }
 .gate__status[data-state="ok"] { color: var(--good); }
 
-.form-frame { padding: 0.5rem; }
+.form-frame { padding: 0.5rem 0.5rem 0; }
+
+/* The height is set by script.js from the message Jotform posts, so the form
+   never scrolls inside its own frame. This min-height is only the fallback for
+   the case where that message never arrives. */
 .form-frame iframe {
   display: block;
   width: 100%;
-  min-height: 900px;
+  min-height: 1180px;
   border: 0;
   border-radius: var(--radius);
   background: transparent;
 }
+@media (max-width: 560px) { .form-frame iframe { min-height: 1360px; } }
 
-.demo__aside {
+.form-frame__foot {
+  border-top: 1px solid var(--border);
+  padding: 0.85rem 1rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* Stretched so the sticky child has a track to travel down. Without this the
+   grid item is only as tall as its content and sticky has nowhere to go. */
+.demo__aside { align-self: stretch; }
+
+/* Stacked, the explanation goes first. Below it the visitor would have to
+   scroll past the whole form to find out what submitting does. */
+@media (max-width: 959px) { .demo__aside { order: -1; } }
+
+.demo__aside-sticky {
   background: var(--bg-alt);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 1.75rem 1.6rem;
 }
-.demo__aside-title { font-size: 1.125rem; margin-bottom: 1rem; }
+@media (min-width: 960px) {
+  .demo__aside-sticky { position: sticky; top: 5.75rem; }
+}
 
-.steps { list-style: none; margin: 0 0 1.25rem; padding: 0; }
+.demo__aside-title { font-size: 1.125rem; margin-bottom: 1.25rem; }
+
+/* A rail with dots rather than divider rules: this is a sequence in time, and
+   the six step cards above already own the boxed-grid look. */
+.steps { list-style: none; margin: 0; padding: 0; }
 .steps li {
-  display: flex;
-  gap: 0.75rem;
-  padding: 0.6rem 0;
-  border-bottom: 1px dashed var(--border-strong);
+  display: grid;
+  grid-template-columns: 3.25rem minmax(0, 1fr);
+  gap: 0.9rem;
   font-size: 0.9rem;
   color: var(--ink-2);
 }
-.steps li:last-child { border-bottom: 0; }
 .steps__t {
   font-family: var(--font-mono);
   font-size: 0.75rem;
   color: var(--accent);
-  flex: none;
-  width: 3rem;
-  padding-top: 0.15rem;
+  text-align: right;
+  padding-top: 0.2rem;
+}
+.steps__d {
+  position: relative;
+  border-left: 1px solid var(--border-strong);
+  padding: 0 0 1.15rem 1.15rem;
+  line-height: 1.5;
+}
+.steps li:last-child .steps__d { border-left-color: transparent; padding-bottom: 0; }
+.steps__d::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: 0.45rem;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+.steps__halt .steps__t { color: var(--ink-2); }
+.steps__halt .steps__d { color: var(--ink); font-weight: 600; }
+.steps__halt .steps__d::before {
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
 }
 
-.demo__privacy { font-size: 0.8125rem; color: var(--muted); line-height: 1.55; }
+.demo__privacy {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed var(--border-strong);
+  font-size: 0.8125rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
 
 /* ---------- 10. Stack ---------- */
 
@@ -644,33 +718,66 @@ code {
 }
 @media (min-width: 900px) { .case { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } }
 
-.video-slot {
-  position: relative;
-  aspect-ratio: 16 / 9;
+.video {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.video__poster {
   display: grid;
   place-content: center;
   justify-items: center;
-  gap: 0.4rem;
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-lg);
-  background:
-    repeating-linear-gradient(135deg, var(--accent-soft) 0 10px, transparent 10px 20px),
-    var(--surface);
+  gap: 0.45rem;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  padding: 1.25rem;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink);
   text-align: center;
-  padding: 1rem;
+  /* A poster, not a placeholder. The dashed-stripe treatment this replaced
+     read as "asset missing" once a real video sat behind it. */
+  background:
+    radial-gradient(30rem 15rem at 50% 42%, var(--accent-soft), transparent 72%),
+    linear-gradient(180deg, var(--bg-alt), var(--surface));
 }
-.video-slot__play {
+
+.video__play {
   display: grid;
   place-items: center;
-  width: 3.5rem;
-  height: 3.5rem;
+  width: 3.75rem;
+  height: 3.75rem;
   border-radius: 50%;
   background: var(--accent);
   color: var(--accent-ink);
+  margin-bottom: 0.35rem;
+  transition: transform var(--speed) var(--ease), background var(--speed) var(--ease);
 }
-.video-slot__play svg { width: 1.5rem; height: 1.5rem; margin-left: 2px; }
-.video-slot__label { font-family: var(--font-display); font-weight: 600; font-size: 1.125rem; }
-.video-slot__hint { font-size: 0.8125rem; color: var(--muted); }
+.video__play svg { width: 1.6rem; height: 1.6rem; margin-left: 3px; }
+.video__poster:hover .video__play { transform: scale(1.07); background: var(--accent-hover); }
+
+.video__label { font-family: var(--font-display); font-weight: 600; font-size: 1.1875rem; }
+.video__meta { font-size: 0.875rem; color: var(--ink-2); }
+.video__note {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 0.35rem;
+}
+
+.video__frame {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+}
+
+.case__fallback { margin-top: 0.75rem; font-size: 0.8125rem; color: var(--muted); }
 
 .case__notes h3 { font-size: 1.125rem; margin-bottom: 1rem; }
 .notes { margin: 0; }
@@ -883,4 +990,5 @@ code {
   }
   .flow__step::before { width: 2.75rem; }
   .card:hover { transform: none; }
+  .video__poster:hover .video__play { transform: none; }
 }
